@@ -13,7 +13,8 @@ This repository now includes both:
 - `specs/schemas/`: JSON Schemas for core entities.
 - `dashboard/index.html`: visual dashboard shell + lead CRUD screen.
 - `dashboard/styles.css`: responsive UI styling.
-- `dashboard/app.js`: mock-data dashboard interactions and localStorage-backed CRUD (create/read/update/delete) for username, platform, kink, and status.
+- `dashboard/api.js`: local CRUD service abstraction (list/create/update/delete), normalization, and duplicate checks.
+- `dashboard/app.js`: screen logic wired to `api.js`, filtering, lanes/KPI rendering, and controls.
 
 ## Run the visual dashboard locally
 
@@ -25,5 +26,5 @@ python -m http.server 4173
 
 ## Notes
 
-- The dashboard is a front-end MVP with mock queue/approvals/agents and localStorage persistence for leads.
+- The dashboard is a front-end MVP with mock queue/approvals/agents and localStorage-backed CRUD service plumbing for leads.
 - Next step is replacing localStorage plumbing with real API calls to `specs/openapi.yaml` endpoints.

@@ -1,14 +1,15 @@
-const STORAGE_KEY = 'naughty-dashboard-leads-v1';
+import { leadsApi } from './api.js';
 
 const seedLeads = [
-  { id: '1', username: 'tg_luna', platform: 'TG', status: 'HOT_DATE_BOUND', tags: ['vip', 'repeat', 'feet'], lastTouch: '12m ago', nextAction: 'Today 09:00', predictedValue7d: 180, confidence: 0.9 },
-  { id: '2', username: 'pd_nova', platform: 'PD', status: 'HOT_DATE_BOUND', tags: ['new', 'tease'], lastTouch: '2h ago', nextAction: 'Today 18:00', predictedValue7d: 75, confidence: 0.72 },
-  { id: '3', username: 'snif_astro', platform: 'SNIFFR', status: 'PREDICTIVE_SOON', tags: ['cadence-14d', 'scented'], lastTouch: '1d ago', nextAction: 'Tomorrow 11:00', predictedValue7d: 95, confidence: 0.68 },
-  { id: '4', username: 'kik_orion', platform: 'KIK', status: 'COOLING', tags: ['manual-assist', 'roleplay'], lastTouch: '5d ago', nextAction: 'In 2 days', predictedValue7d: 45, confidence: 0.45 },
-  { id: '5', username: 'tg_ember', platform: 'TG', status: 'DORMANT', tags: ['high-aov', 'custom'], lastTouch: '13d ago', nextAction: 'In 14 days', predictedValue7d: 30, confidence: 0.28 }
+  { id: '1', username: 'tg_luna', platform: 'TG', status: 'HOT_DATE_BOUND', kink: 'feet', lastTouch: '12m ago', nextAction: 'Today 09:00', predictedValue7d: 180, confidence: 0.9 },
+  { id: '2', username: 'pd_nova', platform: 'PD', status: 'HOT_DATE_BOUND', kink: 'tease', lastTouch: '2h ago', nextAction: 'Today 18:00', predictedValue7d: 75, confidence: 0.72 },
+  { id: '3', username: 'snif_astro', platform: 'SNIFFR', status: 'PREDICTIVE_SOON', kink: 'scented', lastTouch: '1d ago', nextAction: 'Tomorrow 11:00', predictedValue7d: 95, confidence: 0.68 },
+  { id: '4', username: 'kik_orion', platform: 'KIK', status: 'COOLING', kink: 'roleplay', lastTouch: '5d ago', nextAction: 'In 2 days', predictedValue7d: 45, confidence: 0.45 },
+  { id: '5', username: 'tg_ember', platform: 'TG', status: 'DORMANT', kink: 'custom', lastTouch: '13d ago', nextAction: 'In 14 days', predictedValue7d: 30, confidence: 0.28 }
 ];
 
 const sample = {
+  leads: leadsApi.seedIfEmpty(seedLeads),
   queue: [
     '09:00 · TG · tg_luna · hot_t_minus_1d',
     '11:00 · SNIFFR · snif_astro · predictive_window_open',
@@ -30,23 +31,6 @@ let killSwitch = false;
 let editingLeadId = null;
 const state = { search: '', platform: 'ALL', status: 'ALL' };
 
-function loadLeads() {
-  try {
-    const fromStorage = localStorage.getItem(STORAGE_KEY);
-    if (!fromStorage) return [...seedLeads];
-    const parsed = JSON.parse(fromStorage);
-    return Array.isArray(parsed) ? parsed : [...seedLeads];
-  } catch {
-    return [...seedLeads];
-  }
-}
-
-function saveLeads() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(sample.leads));
-}
-
-sample.leads = loadLeads();
-
 const kpiStrip = document.getElementById('kpiStrip');
 const searchInput = document.getElementById('searchInput');
 const platformFilter = document.getElementById('platformFilter');
@@ -60,14 +44,14 @@ const statusInput = document.getElementById('statusInput');
 const submitBtn = document.getElementById('submitBtn');
 const cancelEditBtn = document.getElementById('cancelEditBtn');
 
-function uid() {
-  return String(Date.now() + Math.floor(Math.random() * 1000));
+function refreshLeads() {
+  sample.leads = leadsApi.list();
 }
 
 function filteredLeads() {
   return sample.leads.filter((l) => {
     const query = state.search.toLowerCase();
-    const hitsQuery = !query || l.username.toLowerCase().includes(query) || l.tags.join(' ').toLowerCase().includes(query);
+    const hitsQuery = !query || l.username.toLowerCase().includes(query) || l.kink.toLowerCase().includes(query);
     const hitsPlatform = state.platform === 'ALL' || l.platform === state.platform;
     const hitsState = state.status === 'ALL' || l.status === state.status;
     return hitsQuery && hitsPlatform && hitsState;
@@ -90,10 +74,7 @@ function renderKpis(list) {
   ];
 
   kpiStrip.innerHTML = items.map(([label, value]) => `
-    <div class="kpi">
-      <div class="label">${label}</div>
-      <div class="value">${value}</div>
-    </div>
+    <div class="kpi"><div class="label">${label}</div><div class="value">${value}</div></div>
   `).join('');
 }
 
@@ -108,18 +89,14 @@ function makeLeadCard(lead) {
   card.querySelector('.lead-name').textContent = lead.username;
   card.querySelector('.value-chip').textContent = `$${lead.predictedValue7d}`;
   card.querySelector('.lead-meta').textContent = `Last: ${lead.lastTouch} · Next: ${lead.nextAction}`;
-  card.querySelector('.lead-tags').innerHTML = lead.tags.slice(0, 3).map((t) => `<span>${t}</span>`).join('');
+  card.querySelector('.lead-tags').innerHTML = `<span>${lead.kink}</span>`;
 
   card.querySelectorAll('button[data-action]').forEach((btn) => {
     btn.addEventListener('click', () => {
       const action = btn.dataset.action;
-      if (action === 'dnc') {
-        lead.status = 'DO_NOT_CONTACT';
-      }
-      if (action === 'pause') {
-        lead.nextAction = 'Paused';
-      }
-      saveLeads();
+      if (action === 'dnc') leadsApi.update(lead.id, { status: 'DO_NOT_CONTACT' });
+      if (action === 'pause') leadsApi.update(lead.id, { nextAction: 'Paused' });
+      refreshLeads();
       render();
     });
   });
@@ -143,16 +120,9 @@ function renderCrudTable() {
   leadCrudBody.innerHTML = '';
   sample.leads.forEach((lead) => {
     const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${lead.username}</td>
-      <td>${lead.platform}</td>
-      <td>${lead.tags[lead.tags.length - 1] || '-'}</td>
-      <td>${lead.status}</td>
-      <td>
-        <button data-action="edit" data-id="${lead.id}">Edit</button>
-        <button data-action="delete" data-id="${lead.id}" class="danger">Delete</button>
-      </td>
-    `;
+    tr.innerHTML = `<td>${lead.username}</td><td>${lead.platform}</td><td>${lead.kink}</td><td>${lead.status}</td>
+      <td><button data-action="edit" data-id="${lead.id}">Edit</button>
+      <button data-action="delete" data-id="${lead.id}" class="danger">Delete</button></td>`;
     leadCrudBody.appendChild(tr);
   });
 }
@@ -182,7 +152,6 @@ function render() {
   renderKpis(list);
   renderLanes(list);
   renderCrudTable();
-
   renderList('queueList', sample.queue.slice(0, 10), (item) => item);
   renderList('approvalList', sample.approvals, (item) => `${item.text} <span class="badge warn">${item.state}</span>`);
   renderList('agentList', sample.agents, (a) => {
@@ -193,37 +162,23 @@ function render() {
 
 leadForm.addEventListener('submit', (e) => {
   e.preventDefault();
-  const username = usernameInput.value.trim();
-  const platform = platformInput.value;
-  const kink = kinkInput.value;
-  const status = statusInput.value;
+  try {
+    const payload = {
+      username: usernameInput.value.trim(),
+      platform: platformInput.value,
+      kink: kinkInput.value,
+      status: statusInput.value
+    };
 
-  if (!username) return;
+    if (editingLeadId) leadsApi.update(editingLeadId, payload);
+    else leadsApi.create(payload);
 
-  if (editingLeadId) {
-    const existing = sample.leads.find((l) => l.id === editingLeadId);
-    if (!existing) return;
-    existing.username = username;
-    existing.platform = platform;
-    existing.status = status;
-    existing.tags = [...new Set([...existing.tags.filter((t) => !['feet', 'scented', 'roleplay', 'tease', 'custom'].includes(t)), kink])];
-  } else {
-    sample.leads.unshift({
-      id: uid(),
-      username,
-      platform,
-      status,
-      tags: ['new', kink],
-      lastTouch: 'just now',
-      nextAction: 'Pending schedule',
-      predictedValue7d: 40,
-      confidence: 0.5
-    });
+    refreshLeads();
+    resetForm();
+    render();
+  } catch (error) {
+    alert(error.message);
   }
-
-  saveLeads();
-  resetForm();
-  render();
 });
 
 leadCrudBody.addEventListener('click', (e) => {
@@ -237,8 +192,8 @@ leadCrudBody.addEventListener('click', (e) => {
   if (!lead) return;
 
   if (action === 'delete') {
-    sample.leads = sample.leads.filter((l) => l.id !== id);
-    saveLeads();
+    leadsApi.remove(id);
+    refreshLeads();
     if (editingLeadId === id) resetForm();
     render();
     return;
@@ -249,39 +204,24 @@ leadCrudBody.addEventListener('click', (e) => {
     usernameInput.value = lead.username;
     platformInput.value = lead.platform;
     statusInput.value = lead.status;
-    kinkInput.value = lead.tags.find((t) => ['feet', 'scented', 'roleplay', 'tease', 'custom'].includes(t)) || 'custom';
+    kinkInput.value = lead.kink;
     submitBtn.textContent = 'Update Lead';
     cancelEditBtn.hidden = false;
   }
 });
 
 cancelEditBtn.addEventListener('click', resetForm);
+searchInput.addEventListener('input', (e) => { state.search = e.target.value; render(); });
+platformFilter.addEventListener('change', (e) => { state.platform = e.target.value; render(); });
+stateFilter.addEventListener('change', (e) => { state.status = e.target.value; render(); });
 
-searchInput.addEventListener('input', (e) => {
-  state.search = e.target.value;
-  render();
-});
-platformFilter.addEventListener('change', (e) => {
-  state.platform = e.target.value;
-  render();
-});
-stateFilter.addEventListener('change', (e) => {
-  state.status = e.target.value;
-  render();
-});
-
-document.getElementById('approveAllBtn').addEventListener('click', () => {
-  sample.approvals = [];
-  render();
-});
-
+document.getElementById('approveAllBtn').addEventListener('click', () => { sample.approvals = []; render(); });
 document.getElementById('killSwitchBtn').addEventListener('click', (e) => {
   killSwitch = !killSwitch;
   e.target.textContent = `Global Kill Switch: ${killSwitch ? 'ON' : 'OFF'}`;
   e.target.classList.toggle('danger', !killSwitch);
 });
-
-document.getElementById('refreshBtn').addEventListener('click', render);
+document.getElementById('refreshBtn').addEventListener('click', () => { refreshLeads(); render(); });
 
 resetForm();
 render();
