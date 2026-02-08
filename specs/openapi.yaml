@@ -1,0 +1,409 @@
+openapi: 3.1.0
+info:
+  title: Naughty Control Automation API
+  version: 1.0.0
+  description: >-
+    API for agent-operated CRM + campaign supervision across multiple platforms.
+servers:
+  - url: https://api.example.com
+
+tags:
+  - name: Leads
+  - name: Interactions
+  - name: Payments
+  - name: Campaign Queue
+  - name: Approvals
+  - name: Agents
+  - name: Forecast
+  - name: Safety
+
+paths:
+  /leads:
+    get:
+      tags: [Leads]
+      summary: List leads with filtering
+      parameters:
+        - $ref: '#/components/parameters/StateParam'
+        - $ref: '#/components/parameters/PlatformParam'
+        - in: query
+          name: tag
+          schema: { type: string }
+        - in: query
+          name: q
+          schema: { type: string }
+      responses:
+        '200':
+          description: Lead list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/Lead' }
+    post:
+      tags: [Leads]
+      summary: Create lead
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateLeadRequest' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Lead' }
+
+  /leads/{leadId}:
+    get:
+      tags: [Leads]
+      summary: Get lead details
+      parameters: [ { $ref: '#/components/parameters/LeadIdParam' } ]
+      responses:
+        '200':
+          description: Lead
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LeadDetail' }
+    patch:
+      tags: [Leads]
+      summary: Update lead metadata or manual override
+      parameters: [ { $ref: '#/components/parameters/LeadIdParam' } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateLeadRequest' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Lead' }
+
+  /leads/{leadId}/interactions:
+    post:
+      tags: [Interactions]
+      summary: Record interaction event
+      parameters: [ { $ref: '#/components/parameters/LeadIdParam' } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/InteractionCreate' }
+      responses:
+        '201':
+          description: Created
+
+  /leads/{leadId}/payments:
+    post:
+      tags: [Payments]
+      summary: Record payment and trigger prediction refresh
+      parameters: [ { $ref: '#/components/parameters/LeadIdParam' } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PaymentCreate' }
+      responses:
+        '201':
+          description: Created
+
+  /scheduled-actions:
+    get:
+      tags: [Campaign Queue]
+      summary: List scheduled actions
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [queued, awaiting_approval, sent, skipped, failed, canceled]
+        - $ref: '#/components/parameters/PlatformParam'
+        - in: query
+          name: due_before
+          schema: { type: string, format: date-time }
+      responses:
+        '200':
+          description: Queue entries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/ScheduledAction' }
+
+  /scheduled-actions/{actionId}/approve:
+    post:
+      tags: [Approvals]
+      summary: Approve an awaiting action
+      parameters:
+        - $ref: '#/components/parameters/ActionIdParam'
+      responses:
+        '200':
+          description: Approved and dispatched or queued for dispatch
+
+  /scheduled-actions/{actionId}/reject:
+    post:
+      tags: [Approvals]
+      summary: Reject or cancel an awaiting action
+      parameters:
+        - $ref: '#/components/parameters/ActionIdParam'
+      responses:
+        '200':
+          description: Rejected
+
+  /approvals/batch:
+    post:
+      tags: [Approvals]
+      summary: Batch approve queued items
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action_ids]
+              properties:
+                action_ids:
+                  type: array
+                  items: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Batch result
+
+  /agents/heartbeats:
+    post:
+      tags: [Agents]
+      summary: Update platform agent heartbeat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AgentHeartbeat' }
+      responses:
+        '200':
+          description: Heartbeat accepted
+
+  /agents/status:
+    get:
+      tags: [Agents]
+      summary: Get current agent health summary
+      responses:
+        '200':
+          description: Agent health
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/AgentStatus' }
+
+  /forecast/7d:
+    get:
+      tags: [Forecast]
+      summary: Return expected 7-day revenue summary
+      responses:
+        '200':
+          description: Forecast data
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Forecast7d' }
+
+  /safety/kill-switch:
+    post:
+      tags: [Safety]
+      summary: Pause outbound globally or by platform
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [enabled]
+              properties:
+                enabled: { type: boolean }
+                platform:
+                  $ref: '#/components/schemas/Platform'
+      responses:
+        '200':
+          description: Kill switch updated
+
+components:
+  parameters:
+    LeadIdParam:
+      in: path
+      name: leadId
+      required: true
+      schema: { type: string, format: uuid }
+    ActionIdParam:
+      in: path
+      name: actionId
+      required: true
+      schema: { type: string, format: uuid }
+    PlatformParam:
+      in: query
+      name: platform
+      schema: { $ref: '#/components/schemas/Platform' }
+    StateParam:
+      in: query
+      name: state
+      schema: { $ref: '#/components/schemas/LeadState' }
+
+  schemas:
+    Platform:
+      type: string
+      enum: [PD, SNIFFR, TG, KIK]
+
+    LeadState:
+      type: string
+      enum: [HOT_DATE_BOUND, PREDICTIVE_SOON, COOLING, DORMANT, DO_NOT_CONTACT]
+
+    Lead:
+      type: object
+      required: [id, display_name, status, primary_platform, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        display_name: { type: string }
+        primary_platform: { $ref: '#/components/schemas/Platform' }
+        status: { $ref: '#/components/schemas/LeadState' }
+        declared_buy_date: { type: string, format: date, nullable: true }
+        tags:
+          type: array
+          maxItems: 10
+          items: { type: string }
+        interests:
+          type: array
+          maxItems: 10
+          items: { type: string }
+        predicted_value_7d: { type: number }
+        confidence_score: { type: number, minimum: 0, maximum: 1 }
+        next_action_at: { type: string, format: date-time, nullable: true }
+        updated_at: { type: string, format: date-time }
+
+    LeadDetail:
+      allOf:
+        - $ref: '#/components/schemas/Lead'
+        - type: object
+          properties:
+            identities:
+              type: array
+              items: { $ref: '#/components/schemas/LeadIdentity' }
+            latest_notes:
+              type: array
+              items: { type: string }
+
+    LeadIdentity:
+      type: object
+      required: [platform, username]
+      properties:
+        platform: { $ref: '#/components/schemas/Platform' }
+        username: { type: string }
+        profile_url: { type: string, nullable: true }
+
+    CreateLeadRequest:
+      type: object
+      required: [display_name, primary_platform]
+      properties:
+        display_name: { type: string }
+        primary_platform: { $ref: '#/components/schemas/Platform' }
+        identities:
+          type: array
+          items: { $ref: '#/components/schemas/LeadIdentity' }
+        tags:
+          type: array
+          items: { type: string }
+
+    UpdateLeadRequest:
+      type: object
+      properties:
+        status: { $ref: '#/components/schemas/LeadState' }
+        declared_buy_date: { type: string, format: date, nullable: true }
+        tags:
+          type: array
+          maxItems: 10
+          items: { type: string }
+        manual_override_until: { type: string, format: date-time, nullable: true }
+
+    InteractionCreate:
+      type: object
+      required: [platform, direction, type, timestamp]
+      properties:
+        platform: { $ref: '#/components/schemas/Platform' }
+        direction: { type: string, enum: [inbound, outbound] }
+        type: { type: string, enum: [message, media, note, system] }
+        timestamp: { type: string, format: date-time }
+        content_excerpt: { type: string }
+        outcome:
+          type: string
+          enum: [sent, delivered, read, replied, failed, unknown]
+
+    PaymentCreate:
+      type: object
+      required: [platform, amount_cents, timestamp]
+      properties:
+        platform: { $ref: '#/components/schemas/Platform' }
+        amount_cents: { type: integer, minimum: 1 }
+        currency: { type: string, default: USD }
+        timestamp: { type: string, format: date-time }
+
+    ScheduledAction:
+      type: object
+      required: [id, lead_id, campaign_id, campaign_step_id, platform, run_at, status]
+      properties:
+        id: { type: string, format: uuid }
+        lead_id: { type: string, format: uuid }
+        campaign_id: { type: string, format: uuid }
+        campaign_step_id: { type: string, format: uuid }
+        platform: { $ref: '#/components/schemas/Platform' }
+        run_at: { type: string, format: date-time }
+        status:
+          type: string
+          enum: [queued, awaiting_approval, sent, skipped, failed, canceled]
+        dedupe_key: { type: string }
+        draft_payload: { type: object, additionalProperties: true }
+
+    AgentHeartbeat:
+      type: object
+      required: [platform, name, is_online, queue_depth, last_heartbeat]
+      properties:
+        platform: { $ref: '#/components/schemas/Platform' }
+        name: { type: string }
+        is_online: { type: boolean }
+        queue_depth: { type: integer, minimum: 0 }
+        rate_limit_state: { type: object, additionalProperties: true }
+        last_error: { type: string, nullable: true }
+        last_heartbeat: { type: string, format: date-time }
+
+    AgentStatus:
+      type: object
+      properties:
+        platform: { $ref: '#/components/schemas/Platform' }
+        name: { type: string }
+        is_online: { type: boolean }
+        queue_depth: { type: integer }
+        last_error: { type: string, nullable: true }
+        last_heartbeat: { type: string, format: date-time }
+
+    Forecast7d:
+      type: object
+      required: [expected_revenue_cents, generated_at]
+      properties:
+        expected_revenue_cents: { type: integer, minimum: 0 }
+        generated_at: { type: string, format: date-time }
+        breakdown:
+          type: array
+          items:
+            type: object
+            properties:
+              lead_id: { type: string, format: uuid }
+              state: { $ref: '#/components/schemas/LeadState' }
+              weight: { type: number }
+              contribution_cents: { type: integer }
