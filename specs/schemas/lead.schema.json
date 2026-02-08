@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/schemas/lead.schema.json",
+  "title": "Lead",
+  "type": "object",
+  "required": ["id", "display_name", "primary_platform", "status", "created_at", "updated_at"],
+  "properties": {
+    "id": { "type": "string", "format": "uuid" },
+    "display_name": { "type": "string", "minLength": 1 },
+    "primary_platform": { "type": "string", "enum": ["PD", "SNIFFR", "TG", "KIK"] },
+    "status": {
+      "type": "string",
+      "enum": ["HOT_DATE_BOUND", "PREDICTIVE_SOON", "COOLING", "DORMANT", "DO_NOT_CONTACT"]
+    },
+    "declared_buy_date": { "type": ["string", "null"], "format": "date" },
+    "tags": { "type": "array", "maxItems": 10, "items": { "type": "string" } },
+    "interests": { "type": "array", "maxItems": 10, "items": { "type": "string" } },
+    "risk_flag": { "type": "string", "enum": ["none", "caution", "high"] },
+    "manual_override_until": { "type": ["string", "null"], "format": "date-time" },
+    "first_seen_at": { "type": ["string", "null"], "format": "date-time" },
+    "last_seen_at": { "type": ["string", "null"], "format": "date-time" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": false
+}

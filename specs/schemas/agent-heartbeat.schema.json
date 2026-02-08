@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/schemas/agent-heartbeat.schema.json",
+  "title": "AgentHeartbeat",
+  "type": "object",
+  "required": ["platform", "name", "is_online", "queue_depth", "last_heartbeat"],
+  "properties": {
+    "platform": { "type": "string", "enum": ["PD", "SNIFFR", "TG", "KIK"] },
+    "name": { "type": "string", "minLength": 1 },
+    "is_online": { "type": "boolean" },
+    "queue_depth": { "type": "integer", "minimum": 0 },
+    "rate_limit_state": { "type": "object", "additionalProperties": true },
+    "last_error": { "type": ["string", "null"] },
+    "last_heartbeat": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": false
+}

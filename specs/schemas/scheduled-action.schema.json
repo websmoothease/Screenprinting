@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/schemas/scheduled-action.schema.json",
+  "title": "ScheduledAction",
+  "type": "object",
+  "required": [
+    "id",
+    "lead_id",
+    "campaign_id",
+    "campaign_step_id",
+    "platform",
+    "run_at",
+    "status",
+    "dedupe_key"
+  ],
+  "properties": {
+    "id": { "type": "string", "format": "uuid" },
+    "lead_id": { "type": "string", "format": "uuid" },
+    "campaign_id": { "type": "string", "format": "uuid" },
+    "campaign_step_id": { "type": "string", "format": "uuid" },
+    "platform": { "type": "string", "enum": ["PD", "SNIFFR", "TG", "KIK"] },
+    "run_at": { "type": "string", "format": "date-time" },
+    "status": {
+      "type": "string",
+      "enum": ["queued", "awaiting_approval", "sent", "skipped", "failed", "canceled"]
+    },
+    "dedupe_key": { "type": "string", "minLength": 1 },
+    "draft_payload": { "type": "object", "additionalProperties": true },
+    "result_payload": { "type": "object", "additionalProperties": true }
+  },
+  "additionalProperties": false
+}
