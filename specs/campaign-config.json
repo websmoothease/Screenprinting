@@ -1,0 +1,115 @@
+{
+  "version": "1.0",
+  "timezone": "UTC",
+  "quiet_hours": {
+    "start_local": "22:00",
+    "end_local": "08:00"
+  },
+  "tracks": [
+    {
+      "name": "Hot Track",
+      "state": "HOT_DATE_BOUND",
+      "is_active": true,
+      "steps": [
+        {
+          "step_order": 1,
+          "delay_from_trigger_minutes": -4320,
+          "template_key": "hot_t_minus_3d",
+          "requires_approval": false,
+          "channel_policy": { "allowed_platforms": ["TG", "SNIFFR", "PD"] }
+        },
+        {
+          "step_order": 2,
+          "delay_from_trigger_minutes": -1440,
+          "template_key": "hot_t_minus_1d",
+          "requires_approval": true,
+          "channel_policy": { "allowed_platforms": ["TG", "SNIFFR", "PD"] }
+        },
+        {
+          "step_order": 3,
+          "delay_from_trigger_minutes": -480,
+          "template_key": "hot_day_of",
+          "requires_approval": true,
+          "channel_policy": { "allowed_platforms": ["TG", "SNIFFR", "PD"] }
+        }
+      ]
+    },
+    {
+      "name": "Predictive Track",
+      "state": "PREDICTIVE_SOON",
+      "is_active": true,
+      "steps": [
+        {
+          "step_order": 1,
+          "delay_from_trigger_minutes": 0,
+          "template_key": "predictive_window_open",
+          "requires_approval": false,
+          "channel_policy": { "allowed_platforms": ["TG", "SNIFFR", "PD"] }
+        },
+        {
+          "step_order": 2,
+          "delay_from_trigger_minutes": 2880,
+          "template_key": "predictive_window_mid",
+          "requires_approval": true,
+          "channel_policy": { "allowed_platforms": ["TG", "SNIFFR", "PD"] }
+        }
+      ]
+    },
+    {
+      "name": "Cooling Track",
+      "state": "COOLING",
+      "is_active": true,
+      "steps": [
+        {
+          "step_order": 1,
+          "delay_from_trigger_minutes": 2880,
+          "template_key": "cooling_nudge_1",
+          "requires_approval": true,
+          "channel_policy": { "allowed_platforms": ["TG", "SNIFFR", "PD", "KIK"] }
+        },
+        {
+          "step_order": 2,
+          "delay_from_trigger_minutes": 7200,
+          "template_key": "cooling_nudge_2",
+          "requires_approval": true,
+          "channel_policy": { "allowed_platforms": ["TG", "SNIFFR", "PD", "KIK"] }
+        },
+        {
+          "step_order": 3,
+          "delay_from_trigger_minutes": 12960,
+          "template_key": "cooling_nudge_3",
+          "requires_approval": true,
+          "channel_policy": { "allowed_platforms": ["TG", "SNIFFR", "PD", "KIK"] }
+        }
+      ]
+    },
+    {
+      "name": "Dormant Track",
+      "state": "DORMANT",
+      "is_active": true,
+      "steps": [
+        {
+          "step_order": 1,
+          "delay_from_trigger_minutes": 20160,
+          "template_key": "dormant_14d",
+          "requires_approval": true,
+          "channel_policy": { "allowed_platforms": ["TG", "SNIFFR", "PD", "KIK"] }
+        },
+        {
+          "step_order": 2,
+          "delay_from_trigger_minutes": 43200,
+          "template_key": "dormant_30d",
+          "requires_approval": true,
+          "channel_policy": { "allowed_platforms": ["TG", "SNIFFR", "PD", "KIK"] }
+        },
+        {
+          "step_order": 3,
+          "delay_from_trigger_minutes": 64800,
+          "template_key": "dormant_45d",
+          "requires_approval": true,
+          "channel_policy": { "allowed_platforms": ["TG", "SNIFFR", "PD", "KIK"] }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Naughty Control Dashboard (MVP)</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <h1>Naughty Control Dashboard</h1>
+      <div class="topbar-actions">
+        <button id="refreshBtn">Refresh</button>
+        <button id="killSwitchBtn" class="danger">Global Kill Switch: OFF</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="kpi-strip" id="kpiStrip"></section>
+
+      <section class="filters card">
+        <h2>Search + Filters</h2>
+        <div class="filter-grid">
+          <input id="searchInput" placeholder="Search username or tag" />
+          <select id="platformFilter">
+            <option value="ALL">All platforms</option>
+            <option value="TG">Telegram</option>
+            <option value="PD">Pantydeal</option>
+            <option value="SNIFFR">Snifffr</option>
+            <option value="KIK">Kik</option>
+          </select>
+          <select id="stateFilter">
+            <option value="ALL">All states</option>
+            <option value="HOT_DATE_BOUND">Hot</option>
+            <option value="PREDICTIVE_SOON">Predictive</option>
+            <option value="COOLING">Cooling</option>
+            <option value="DORMANT">Dormant</option>
+            <option value="DO_NOT_CONTACT">DNC</option>
+          </select>
+        </div>
+      </section>
+
+      <section class="crud card">
+        <h2>Lead CRUD</h2>
+        <form id="leadForm" class="crud-form">
+          <input id="usernameInput" placeholder="username (required)" required />
+          <select id="platformInput" required>
+            <option value="TG">Telegram</option>
+            <option value="PD">Pantydeal</option>
+            <option value="SNIFFR">Snifffr</option>
+            <option value="KIK">Kik</option>
+          </select>
+          <select id="kinkInput" required>
+            <option value="feet">Feet</option>
+            <option value="scented">Scented</option>
+            <option value="roleplay">Roleplay</option>
+            <option value="tease">Tease</option>
+            <option value="custom">Custom</option>
+          </select>
+          <select id="statusInput">
+            <option value="PREDICTIVE_SOON">Predictive</option>
+            <option value="HOT_DATE_BOUND">Hot</option>
+            <option value="COOLING">Cooling</option>
+            <option value="DORMANT">Dormant</option>
+            <option value="DO_NOT_CONTACT">DNC</option>
+          </select>
+          <button type="submit" id="submitBtn">Add Lead</button>
+          <button type="button" id="cancelEditBtn" class="ghost" hidden>Cancel Edit</button>
+        </form>
+        <p class="form-hint">Create, edit, and delete leads with username/platform/kink. Data persists in localStorage.</p>
+
+        <div class="table-wrap">
+          <table id="leadCrudTable">
+            <thead>
+              <tr>
+                <th>Username</th>
+                <th>Platform</th>
+                <th>Kink</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="leadCrudBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="lanes">
+        <article class="lane card" data-state="HOT_DATE_BOUND">
+          <h3>🔥 Hot / Date-bound</h3>
+          <div class="lane-list" id="lane-HOT_DATE_BOUND"></div>
+        </article>
+        <article class="lane card" data-state="PREDICTIVE_SOON">
+          <h3>🧠 Predictive Soon</h3>
+          <div class="lane-list" id="lane-PREDICTIVE_SOON"></div>
+        </article>
+        <article class="lane card" data-state="COOLING">
+          <h3>🧊 Cooling</h3>
+          <div class="lane-list" id="lane-COOLING"></div>
+        </article>
+        <article class="lane card" data-state="DORMANT">
+          <h3>🌙 Dormant</h3>
+          <div class="lane-list" id="lane-DORMANT"></div>
+        </article>
+      </section>
+
+      <aside class="side-column">
+        <section class="card">
+          <h2>Campaign Queue (next 10)</h2>
+          <ul id="queueList" class="plain-list"></ul>
+        </section>
+
+        <section class="card">
+          <h2>Approvals Inbox</h2>
+          <div class="inline-actions">
+            <button id="approveAllBtn">Approve All Visible</button>
+          </div>
+          <ul id="approvalList" class="plain-list"></ul>
+        </section>
+
+        <section class="card">
+          <h2>Agent Health</h2>
+          <ul id="agentList" class="plain-list"></ul>
+        </section>
+      </aside>
+    </main>
+
+    <template id="leadCardTemplate">
+      <article class="lead-card">
+        <div class="lead-head">
+          <span class="platform-pill"></span>
+          <strong class="lead-name"></strong>
+          <span class="value-chip"></span>
+        </div>
+        <div class="lead-meta"></div>
+        <div class="lead-tags"></div>
+        <div class="lead-actions">
+          <button data-action="approve">Approve</button>
+          <button data-action="pause">Pause</button>
+          <button data-action="track">Change Track</button>
+          <button data-action="dnc" class="danger">DNC</button>
+        </div>
+      </article>
+    </template>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
