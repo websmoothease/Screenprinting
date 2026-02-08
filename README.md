@@ -3,7 +3,7 @@
 This repository now includes both:
 
 1. **Implementation specs** (API/state/config/contracts)
-2. **A visual dashboard MVP** (`dashboard/`) with CRUD plumbing for lead management
+2. **A visual dashboard MVP** (`dashboard/`) that demonstrates the control-tower layout and interactions
 
 ## Included artifacts
 
@@ -11,10 +11,9 @@ This repository now includes both:
 - `specs/state-transitions.md`: event-driven state transition table for the lead lifecycle.
 - `specs/campaign-config.json`: configurable campaign definitions for HOT, PREDICTIVE, COOLING, and DORMANT tracks.
 - `specs/schemas/`: JSON Schemas for core entities.
-- `dashboard/index.html`: visual dashboard shell + lead CRUD screen.
+- `dashboard/index.html`: visual dashboard shell.
 - `dashboard/styles.css`: responsive UI styling.
-- `dashboard/api.js`: local CRUD service abstraction (list/create/update/delete), normalization, and duplicate checks.
-- `dashboard/app.js`: screen logic wired to `api.js`, filtering, lanes/KPI rendering, and controls.
+- `dashboard/app.js`: sample-data-driven dashboard interactions (filters, lanes, approvals, kill switch toggle).
 
 ## Run the visual dashboard locally
 
@@ -26,5 +25,5 @@ python -m http.server 4173
 
 ## Notes
 
-- The dashboard is a front-end MVP with mock queue/approvals/agents and localStorage-backed CRUD service plumbing for leads.
-- Next step is replacing localStorage plumbing with real API calls to `specs/openapi.yaml` endpoints.
+- The dashboard is a front-end MVP with mock data, intended as the concrete visual baseline.
+- Next step is wiring `dashboard/app.js` to real API endpoints from `specs/openapi.yaml`.

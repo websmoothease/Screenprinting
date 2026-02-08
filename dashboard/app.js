@@ -1,15 +1,12 @@
-import { leadsApi } from './api.js';
-
-const seedLeads = [
-  { id: '1', username: 'tg_luna', platform: 'TG', status: 'HOT_DATE_BOUND', kink: 'feet', lastTouch: '12m ago', nextAction: 'Today 09:00', predictedValue7d: 180, confidence: 0.9 },
-  { id: '2', username: 'pd_nova', platform: 'PD', status: 'HOT_DATE_BOUND', kink: 'tease', lastTouch: '2h ago', nextAction: 'Today 18:00', predictedValue7d: 75, confidence: 0.72 },
-  { id: '3', username: 'snif_astro', platform: 'SNIFFR', status: 'PREDICTIVE_SOON', kink: 'scented', lastTouch: '1d ago', nextAction: 'Tomorrow 11:00', predictedValue7d: 95, confidence: 0.68 },
-  { id: '4', username: 'kik_orion', platform: 'KIK', status: 'COOLING', kink: 'roleplay', lastTouch: '5d ago', nextAction: 'In 2 days', predictedValue7d: 45, confidence: 0.45 },
-  { id: '5', username: 'tg_ember', platform: 'TG', status: 'DORMANT', kink: 'custom', lastTouch: '13d ago', nextAction: 'In 14 days', predictedValue7d: 30, confidence: 0.28 }
-];
-
 const sample = {
-  leads: leadsApi.seedIfEmpty(seedLeads),
+  leads: [
+    { id: '1', username: 'tg_luna', platform: 'TG', status: 'HOT_DATE_BOUND', buyDate: '2026-02-10', tags: ['vip', 'repeat'], lastTouch: '12m ago', nextAction: 'Today 09:00', predictedValue7d: 180, confidence: 0.9 },
+    { id: '2', username: 'pd_nova', platform: 'PD', status: 'HOT_DATE_BOUND', buyDate: '2026-02-11', tags: ['new'], lastTouch: '2h ago', nextAction: 'Today 18:00', predictedValue7d: 75, confidence: 0.72 },
+    { id: '3', username: 'snif_astro', platform: 'SNIFFR', status: 'PREDICTIVE_SOON', buyDate: null, tags: ['cadence-14d'], lastTouch: '1d ago', nextAction: 'Tomorrow 11:00', predictedValue7d: 95, confidence: 0.68 },
+    { id: '4', username: 'kik_orion', platform: 'KIK', status: 'COOLING', buyDate: null, tags: ['manual-assist'], lastTouch: '5d ago', nextAction: 'In 2 days', predictedValue7d: 45, confidence: 0.45 },
+    { id: '5', username: 'tg_ember', platform: 'TG', status: 'DORMANT', buyDate: null, tags: ['high-aov'], lastTouch: '13d ago', nextAction: 'In 14 days', predictedValue7d: 30, confidence: 0.28 },
+    { id: '6', username: 'pd_haze', platform: 'PD', status: 'DO_NOT_CONTACT', buyDate: null, tags: ['boundary'], lastTouch: '3d ago', nextAction: '-', predictedValue7d: 0, confidence: 0 }
+  ],
   queue: [
     '09:00 · TG · tg_luna · hot_t_minus_1d',
     '11:00 · SNIFFR · snif_astro · predictive_window_open',
@@ -28,30 +25,17 @@ const sample = {
 };
 
 let killSwitch = false;
-let editingLeadId = null;
 const state = { search: '', platform: 'ALL', status: 'ALL' };
 
 const kpiStrip = document.getElementById('kpiStrip');
 const searchInput = document.getElementById('searchInput');
 const platformFilter = document.getElementById('platformFilter');
 const stateFilter = document.getElementById('stateFilter');
-const leadCrudBody = document.getElementById('leadCrudBody');
-const leadForm = document.getElementById('leadForm');
-const usernameInput = document.getElementById('usernameInput');
-const platformInput = document.getElementById('platformInput');
-const kinkInput = document.getElementById('kinkInput');
-const statusInput = document.getElementById('statusInput');
-const submitBtn = document.getElementById('submitBtn');
-const cancelEditBtn = document.getElementById('cancelEditBtn');
-
-function refreshLeads() {
-  sample.leads = leadsApi.list();
-}
 
 function filteredLeads() {
   return sample.leads.filter((l) => {
     const query = state.search.toLowerCase();
-    const hitsQuery = !query || l.username.toLowerCase().includes(query) || l.kink.toLowerCase().includes(query);
+    const hitsQuery = !query || l.username.toLowerCase().includes(query) || l.tags.join(' ').toLowerCase().includes(query);
     const hitsPlatform = state.platform === 'ALL' || l.platform === state.platform;
     const hitsState = state.status === 'ALL' || l.status === state.status;
     return hitsQuery && hitsPlatform && hitsState;
@@ -74,7 +58,10 @@ function renderKpis(list) {
   ];
 
   kpiStrip.innerHTML = items.map(([label, value]) => `
-    <div class="kpi"><div class="label">${label}</div><div class="value">${value}</div></div>
+    <div class="kpi">
+      <div class="label">${label}</div>
+      <div class="value">${value}</div>
+    </div>
   `).join('');
 }
 
@@ -88,15 +75,18 @@ function makeLeadCard(lead) {
   card.querySelector('.platform-pill').textContent = lead.platform;
   card.querySelector('.lead-name').textContent = lead.username;
   card.querySelector('.value-chip').textContent = `$${lead.predictedValue7d}`;
-  card.querySelector('.lead-meta').textContent = `Last: ${lead.lastTouch} · Next: ${lead.nextAction}`;
-  card.querySelector('.lead-tags').innerHTML = `<span>${lead.kink}</span>`;
+  card.querySelector('.lead-meta').textContent = `Last: ${lead.lastTouch} · Next: ${lead.nextAction}${lead.buyDate ? ` · Buy: ${lead.buyDate}` : ''}`;
+  card.querySelector('.lead-tags').innerHTML = lead.tags.slice(0, 3).map((t) => `<span>${t}</span>`).join('');
 
   card.querySelectorAll('button[data-action]').forEach((btn) => {
     btn.addEventListener('click', () => {
       const action = btn.dataset.action;
-      if (action === 'dnc') leadsApi.update(lead.id, { status: 'DO_NOT_CONTACT' });
-      if (action === 'pause') leadsApi.update(lead.id, { nextAction: 'Paused' });
-      refreshLeads();
+      if (action === 'dnc') {
+        lead.status = 'DO_NOT_CONTACT';
+      }
+      if (action === 'pause') {
+        lead.nextAction = 'Paused';
+      }
       render();
     });
   });
@@ -116,17 +106,6 @@ function renderLanes(list) {
   });
 }
 
-function renderCrudTable() {
-  leadCrudBody.innerHTML = '';
-  sample.leads.forEach((lead) => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${lead.username}</td><td>${lead.platform}</td><td>${lead.kink}</td><td>${lead.status}</td>
-      <td><button data-action="edit" data-id="${lead.id}">Edit</button>
-      <button data-action="delete" data-id="${lead.id}" class="danger">Delete</button></td>`;
-    leadCrudBody.appendChild(tr);
-  });
-}
-
 function renderList(id, rows, renderRow) {
   const el = document.getElementById(id);
   el.innerHTML = '';
@@ -137,21 +116,11 @@ function renderList(id, rows, renderRow) {
   });
 }
 
-function resetForm() {
-  editingLeadId = null;
-  leadForm.reset();
-  submitBtn.textContent = 'Add Lead';
-  cancelEditBtn.hidden = true;
-  platformInput.value = 'TG';
-  kinkInput.value = 'feet';
-  statusInput.value = 'PREDICTIVE_SOON';
-}
-
 function render() {
   const list = filteredLeads();
   renderKpis(list);
   renderLanes(list);
-  renderCrudTable();
+
   renderList('queueList', sample.queue.slice(0, 10), (item) => item);
   renderList('approvalList', sample.approvals, (item) => `${item.text} <span class="badge warn">${item.state}</span>`);
   renderList('agentList', sample.agents, (a) => {
@@ -160,68 +129,30 @@ function render() {
   });
 }
 
-leadForm.addEventListener('submit', (e) => {
-  e.preventDefault();
-  try {
-    const payload = {
-      username: usernameInput.value.trim(),
-      platform: platformInput.value,
-      kink: kinkInput.value,
-      status: statusInput.value
-    };
-
-    if (editingLeadId) leadsApi.update(editingLeadId, payload);
-    else leadsApi.create(payload);
-
-    refreshLeads();
-    resetForm();
-    render();
-  } catch (error) {
-    alert(error.message);
-  }
+searchInput.addEventListener('input', (e) => {
+  state.search = e.target.value;
+  render();
+});
+platformFilter.addEventListener('change', (e) => {
+  state.platform = e.target.value;
+  render();
+});
+stateFilter.addEventListener('change', (e) => {
+  state.status = e.target.value;
+  render();
 });
 
-leadCrudBody.addEventListener('click', (e) => {
-  const target = e.target;
-  if (!(target instanceof HTMLElement)) return;
-  const action = target.dataset.action;
-  const id = target.dataset.id;
-  if (!action || !id) return;
-
-  const lead = sample.leads.find((l) => l.id === id);
-  if (!lead) return;
-
-  if (action === 'delete') {
-    leadsApi.remove(id);
-    refreshLeads();
-    if (editingLeadId === id) resetForm();
-    render();
-    return;
-  }
-
-  if (action === 'edit') {
-    editingLeadId = id;
-    usernameInput.value = lead.username;
-    platformInput.value = lead.platform;
-    statusInput.value = lead.status;
-    kinkInput.value = lead.kink;
-    submitBtn.textContent = 'Update Lead';
-    cancelEditBtn.hidden = false;
-  }
+document.getElementById('approveAllBtn').addEventListener('click', () => {
+  sample.approvals = [];
+  render();
 });
 
-cancelEditBtn.addEventListener('click', resetForm);
-searchInput.addEventListener('input', (e) => { state.search = e.target.value; render(); });
-platformFilter.addEventListener('change', (e) => { state.platform = e.target.value; render(); });
-stateFilter.addEventListener('change', (e) => { state.status = e.target.value; render(); });
-
-document.getElementById('approveAllBtn').addEventListener('click', () => { sample.approvals = []; render(); });
 document.getElementById('killSwitchBtn').addEventListener('click', (e) => {
   killSwitch = !killSwitch;
   e.target.textContent = `Global Kill Switch: ${killSwitch ? 'ON' : 'OFF'}`;
   e.target.classList.toggle('danger', !killSwitch);
 });
-document.getElementById('refreshBtn').addEventListener('click', () => { refreshLeads(); render(); });
 
-resetForm();
+document.getElementById('refreshBtn').addEventListener('click', render);
+
 render();

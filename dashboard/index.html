@@ -40,51 +40,6 @@
         </div>
       </section>
 
-      <section class="crud card">
-        <h2>Lead CRUD</h2>
-        <form id="leadForm" class="crud-form">
-          <input id="usernameInput" placeholder="username (required)" required />
-          <select id="platformInput" required>
-            <option value="TG">Telegram</option>
-            <option value="PD">Pantydeal</option>
-            <option value="SNIFFR">Snifffr</option>
-            <option value="KIK">Kik</option>
-          </select>
-          <select id="kinkInput" required>
-            <option value="feet">Feet</option>
-            <option value="scented">Scented</option>
-            <option value="roleplay">Roleplay</option>
-            <option value="tease">Tease</option>
-            <option value="custom">Custom</option>
-          </select>
-          <select id="statusInput">
-            <option value="PREDICTIVE_SOON">Predictive</option>
-            <option value="HOT_DATE_BOUND">Hot</option>
-            <option value="COOLING">Cooling</option>
-            <option value="DORMANT">Dormant</option>
-            <option value="DO_NOT_CONTACT">DNC</option>
-          </select>
-          <button type="submit" id="submitBtn">Add Lead</button>
-          <button type="button" id="cancelEditBtn" class="ghost" hidden>Cancel Edit</button>
-        </form>
-        <p class="form-hint">Create, edit, and delete leads with username/platform/kink. Data persists in localStorage.</p>
-
-        <div class="table-wrap">
-          <table id="leadCrudTable">
-            <thead>
-              <tr>
-                <th>Username</th>
-                <th>Platform</th>
-                <th>Kink</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="leadCrudBody"></tbody>
-          </table>
-        </div>
-      </section>
-
       <section class="lanes">
         <article class="lane card" data-state="HOT_DATE_BOUND">
           <h3>🔥 Hot / Date-bound</h3>
@@ -143,6 +98,6 @@
       </article>
     </template>
 
-    <script type="module" src="./app.js"></script>
+    <script src="./app.js"></script>
   </body>
 </html>
